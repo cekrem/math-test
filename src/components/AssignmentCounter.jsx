@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types';
 
-const AssignmentCounter = ({ count, onChange }) => {
+const AssignmentCounter = ({ count, onChange, label }) => {
   return (
     <div className="mb-4">
       <label htmlFor="assignmentCount" className="block text-sm font-medium text-gray-700">
-        Number of Assignments: {count}
+        {label}: {count}
       </label>
       <input
         type="range"
@@ -22,6 +22,7 @@ const AssignmentCounter = ({ count, onChange }) => {
 AssignmentCounter.propTypes = {
   count: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
+  label: PropTypes.string.isRequired,
 };
 
 export default AssignmentCounter;

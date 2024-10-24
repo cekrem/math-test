@@ -3,6 +3,7 @@ import Assignment from './components/Assignment';
 import OperationToggle from './components/OperationToggle';
 import AssignmentCounter from './components/AssignmentCounter';
 import useOperations from './hooks/useOperations';
+import { localize } from './utils/translations';
 import { generateAssignment } from './utils/generateAssignment';
 
 const App = () => {
@@ -15,6 +16,10 @@ const App = () => {
   useEffect(() => {
     generateNewAssignments();
   }, [selectedOperations, numberOfAssignments]);
+
+  useEffect(() => {
+    document.title = localize('title');
+  }, []);
 
   const generateNewAssignments = () => {
     setAssignments(
@@ -37,13 +42,17 @@ const App = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center w-full p-4">
-      <h1 className="text-3xl font-bold mb-4">Math Test</h1>
+      <h1 className="text-3xl font-bold mb-4">{localize('title')}</h1>
       <OperationToggle
         operations={OPERATIONS}
         selectedOperations={selectedOperations}
         onToggle={handleOperationToggle}
       />
-      <AssignmentCounter count={numberOfAssignments} onChange={setNumberOfAssignments} />
+      <AssignmentCounter
+        count={numberOfAssignments}
+        onChange={setNumberOfAssignments}
+        label={localize('numberOfAssignments')}
+      />
       <div className="flex flex-wrap justify-center -mx-2">
         {assignments.map((assignment) => (
           <div key={assignment.id} className="px-2 mb-4">
@@ -72,7 +81,7 @@ const App = () => {
       </div>
       {correctAnswers !== null && (
         <p className="mt-4 text-lg text-center">
-          You got {correctAnswers} out of {assignments.length} correct!
+          {localize('correct', { correct: correctAnswers, total: assignments.length })}
         </p>
       )}
     </div>
