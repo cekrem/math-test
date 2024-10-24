@@ -11,7 +11,7 @@ const Assignment = ({ a, b, operator, userAnswer, correctAnswer, onAnswer, done 
 
   return (
     <div
-      className={`transition-all rounded-lg p-4 m-4 w-56 flex flex-row items-center justify-between ${backgroundColor} ${shadow}`}
+      className={`transition-all rounded-lg p-4 w-56 flex flex-row items-center justify-between ${backgroundColor} ${shadow}`}
     >
       {[a, operator, b, '='].map((item, index) => (
         <div key={index} className="text-lg font-semibold m-2">

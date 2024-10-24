@@ -1,108 +1,133 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Assignment from './Assignment';
 
-const generateAssignment = () => {
-  const id = Math.random().toString(36).substring(2, 15);
+const OPERATIONS = [
+  { symbol: '×', generate: (a, b) => ({ a, b, answer: a * b }) },
+  { symbol: '÷', generate: (a, b) => ({ a: a * b, b, answer: a }) },
+  { symbol: '-', generate: (a, b) => ({ a: a + b, b, answer: a }) },
+  { symbol: '+', generate: (a, b) => ({ a, b, answer: a + b }) },
+];
+
+const generateAssignment = (selectedOps) => {
+  const operation = selectedOps[Math.floor(Math.random() * selectedOps.length)];
   const a = Math.floor(Math.random() * 10) + 1;
   const b = Math.floor(Math.random() * 10) + 1;
+  const { a: displayA, b: displayB, answer } = operation.generate(a, b);
   return {
-    id,
-    a,
-    b,
-    operator: 'x',
-    correctAnswer: a * b,
-    userAnswer: '',
+    id: Math.random().toString(36).substr(2, 9),
+    a: displayA,
+    b: displayB,
+    operator: operation.symbol,
+    correctAnswer: answer,
   };
 };
 
 const App = () => {
+  const [selectedOperations, setSelectedOperations] = useState([OPERATIONS[0]]);
   const [assignments, setAssignments] = useState([]);
-  const [numberOfAssignments, setNumberOfAssignments] = useState(100);
-  const [reset, setReset] = useState(false);
+  const [userAnswers, setUserAnswers] = useState({});
   const [correctAnswers, setCorrectAnswers] = useState(null);
+  const [numberOfAssignments, setNumberOfAssignments] = useState(10);
 
   useEffect(() => {
-    setAssignments(Array.from({ length: numberOfAssignments }, generateAssignment));
-  }, [numberOfAssignments, reset]);
+    generateNewAssignments();
+  }, [selectedOperations, numberOfAssignments]);
 
-  const updateUserAnswer = (id, userAnswer) => {
-    setAssignments((prevAssignments) =>
-      prevAssignments.map((assignment) =>
-        assignment.id === id ? { ...assignment, userAnswer } : assignment,
-      ),
+  const generateNewAssignments = () => {
+    setAssignments(
+      Array.from({ length: numberOfAssignments }, () => generateAssignment(selectedOperations)),
     );
+    setUserAnswers({});
+    setCorrectAnswers(null);
   };
 
-  const dirty = useMemo(
-    () => assignments.some((assignment) => assignment.userAnswer !== ''),
-    [assignments],
-  );
+  const updateUserAnswer = (id, answer) => {
+    setUserAnswers((prev) => ({ ...prev, [id]: answer }));
+  };
 
-  const startTime = useMemo(() => new Date(), [dirty]);
+  const resetAnswers = () => {
+    setUserAnswers({});
+  };
 
-  const calculateCorrectAnswers = () => {
+  const checkAnswers = () => {
     const correct = assignments.filter(
-      (assignment) => Number(assignment.userAnswer) === assignment.correctAnswer,
+      (assignment) => Number(userAnswers[assignment.id]) === assignment.correctAnswer,
     ).length;
     setCorrectAnswers(correct);
-    const endTime = new Date();
-    const timeTaken = endTime - startTime;
-    console.log(`Time taken: ${timeTaken}ms`);
+  };
+
+  const handleOperationToggle = (operation) => {
+    setSelectedOperations((prev) => {
+      if (prev.includes(operation) && prev.length > 1) {
+        return prev.filter((op) => op !== operation);
+      } else if (!prev.includes(operation)) {
+        return [...prev, operation];
+      }
+      return prev;
+    });
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <div className="flex items-start justify-center flex-wrap py-4">
-        <div className="w-full flex items-center justify-center m-2">
-          <div className="flex items-center justify-center h-32">
-            {dirty ? (
-              <>
-                <button
-                  onClick={calculateCorrectAnswers}
-                  className="bg-green-500 text-white text-2xl mx-2 px-4 py-2 rounded"
-                >
-                  √
-                </button>
-                <button
-                  onClick={() => {
-                    setReset((prev) => !prev);
-                    setCorrectAnswers(null);
-                  }}
-                  className="bg-red-500 text-white text-2xl mx-2 px-4 py-2 rounded"
-                >
-                  X
-                </button>
-                {correctAnswers !== null && (
-                  <span className="text-lg font-semibold ml-4 underline">
-                    {correctAnswers} / {assignments.length}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <input
-                  disabled={dirty}
-                  type="range"
-                  min="1"
-                  max="200"
-                  value={numberOfAssignments}
-                  onChange={(e) => setNumberOfAssignments(Number(e.target.value))}
-                  className="range accent-green-50 w-64 m-4"
-                />
-                <div className="text-lg font-semibold w-12">{numberOfAssignments}</div>
-              </>
-            )}
-          </div>
-        </div>
-        {assignments.map((assignment) => (
-          <Assignment
-            key={assignment.id}
-            {...assignment}
-            done={correctAnswers !== null}
-            onAnswer={(userAnswer) => updateUserAnswer(assignment.id, userAnswer)}
-          />
+    <div className="bg-gray-100 min-h-screen w-full p-4">
+      <h1 className="text-3xl font-bold mb-4">Math Test</h1>
+      <div className="mb-4">
+        {OPERATIONS.map((operation) => (
+          <label key={operation.symbol} className="inline-flex items-center mr-4">
+            <input
+              type="checkbox"
+              checked={selectedOperations.includes(operation)}
+              onChange={() => handleOperationToggle(operation)}
+              className="form-checkbox h-5 w-5 text-blue-600"
+            />
+            <span className="ml-2">{operation.symbol}</span>
+          </label>
         ))}
       </div>
+      <div className="mb-4">
+        <label htmlFor="assignmentCount" className="block text-sm font-medium text-gray-700">
+          Number of Assignments: {numberOfAssignments}
+        </label>
+        <input
+          type="range"
+          id="assignmentCount"
+          min="1"
+          max="100"
+          value={numberOfAssignments}
+          onChange={(e) => setNumberOfAssignments(Number(e.target.value))}
+          className="range accent-green-500 mt-1 block w-full"
+        />
+      </div>
+      <div className="flex flex-wrap -mx-2">
+        {assignments.map((assignment) => (
+          <div key={assignment.id} className="px-2 mb-4">
+            <Assignment
+              {...assignment}
+              userAnswer={userAnswers[assignment.id] || ''}
+              onAnswer={(answer) => updateUserAnswer(assignment.id, answer)}
+              done={correctAnswers !== null}
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={checkAnswers}
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-4"
+        >
+          ✓
+        </button>
+        <button
+          onClick={resetAnswers}
+          className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+        >
+          ✗
+        </button>
+      </div>
+      {correctAnswers !== null && (
+        <p className="mt-4 text-lg text-center">
+          You got {correctAnswers} out of {assignments.length} correct!
+        </p>
+      )}
     </div>
   );
 };
